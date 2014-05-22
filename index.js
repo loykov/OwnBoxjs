@@ -14,6 +14,8 @@ var express = require('express'),
     app.configure(function(){
         app.use(express.methodOverride());
         app.use(express.multipart());
+        app.use(express.json());
+        app.use(express.urlencoded());
     });
 
 	app.get('/', function(req,res){
@@ -42,6 +44,21 @@ var express = require('express'),
             }
         );
     });
+    app.post('/',function(req,res){
+	   console.log(req);
+	   res.send(req.body); 
+    });
+    app.post('/api/getFileList', function(req, res){
+    	var data = req.body;
+	    if(typeof data.path != "undefined"){
+		    fileBrowser.getFileList(data, function(send_data){
+			    res.send(send_data);
+		    });
+	    } else {
+	    	console.log(req.body);
+		    res.send({error:"error_no_path"});
+	    }
+    });
 	
 	app.use(express.static(__dirname + '/public'));
 
@@ -53,7 +70,11 @@ var express = require('express'),
 		
 		socket.on('getFileList', function(data) {
 			if(typeof data.path != "undefined"){
-                fileBrowser.getFileList(socket, data);
+                fileBrowser.getFileList(data, function(send_data){
+	                 socket.emit('dataFileList',send_data, function() {
+                        console.log({data:data,send_data:send_data});
+                    });
+                });
 			}
 		});
 		
