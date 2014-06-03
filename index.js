@@ -7,6 +7,15 @@ var express = require('express'),
 	p_now = require("performance-now"),
     fileBrowser = require('./libs/fileBrowser');
 
+	fileBrowser.readAllFiles('',function(file_list) {
+	
+	
+		//test!
+		console.log("-- TEST! --");
+		console.log(file_list);
+		//process.exit();
+	});
+	
 
 	server.listen(2013);
 	console.log("Server started at:		http://192.168.1.45:2013/");
@@ -24,7 +33,8 @@ var express = require('express'),
 	});
     app.post('/api/uploadfile', function(req, res) {
         //console.log("uploads",req);
-        console.log(JSON.stringify(req.files));
+        //console.log("-----!! UPLOAD !! --------");
+        //console.log(JSON.stringify(req.files.uploadFile));
         var serverPath = '/uploads/' + req.files.uploadFile.name;
 
         require('fs').rename(
@@ -33,11 +43,13 @@ var express = require('express'),
             function(error) {
                 if(error) {
                     res.send({
-                        error: 'Ah crap! Something bad happened'
+                        error: 'Ah crap! Something bad happened at: '+__dirname + '/public' + serverPath,
+                        e: error
                     });
                     return;
                 }
-
+                //console.log("---!serverPath!---");
+				//console.log(serverPath);
                 res.send({
                     path: serverPath
                 });
@@ -45,7 +57,7 @@ var express = require('express'),
         );
     });
     app.post('/',function(req,res){
-	   console.log(req);
+	   //console.log(req);
 	   res.send(req.body); 
     });
     app.post('/api/getFileList', function(req, res){
@@ -78,6 +90,14 @@ var express = require('express'),
 			}
 		});
 		
+		socket.on('uploadStart', function (data) { //data contains the variables that we passed through in the html file
+			fileBrowser.uploadFileStart(socket, data);
+		});
+		
+		socket.on('Upload', function (data){
+			fileBrowser.uploadData(socket, data);
+		});
+		
 		/* TODO! socket closed / disconnected event handling */
 		function log(){
 			var array = [">>> Message from server: "];
@@ -87,17 +107,16 @@ var express = require('express'),
 			socket.emit('log', array);
 		}
 	});
-/*
+
 //handle exit
 process.stdin.resume();
 process.on('SIGINT', function () {
-	console.log('Good bye. RaspberryIO now shutting down...');
-	//pins.closeAll(closeProcess);
+	console.log('Good bye. OwnBoxjs now shutting down...');
     //TODO! close
+    closeProcess();
 });
 
 var closeProcess = function() {
 	console.log(" --- EXIT --- ");
 	process.exit();
 };
-    */
